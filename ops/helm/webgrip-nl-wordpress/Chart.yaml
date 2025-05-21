@@ -1,0 +1,10 @@
+apiVersion: v2
+name: webgrip-nl-wordpress
+description: "Umbrella chart that pulls in the official Bitnami WordPress chart"
+type: application
+version: 0.1.0
+appVersion: "6.8.1"
+dependencies:
+  - name: wordpress
+    version: 24.2.6
+    repository: oci://registry-1.docker.io/bitnamicharts

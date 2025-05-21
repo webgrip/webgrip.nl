@@ -1,0 +1,44 @@
+name: '[Workflow] On Source Change'
+
+concurrency:
+  group: push-${{ github.branch }}
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'ops/**'
+      - 'src/**'
+      - '.releaserc.json'
+jobs:
+  release:
+    name: 'Release'
+    uses: webgrip/workflows/.github/workflows/semantic-release.yml@main
+
+  build:
+    name: 'Build'
+    needs: [ release ]
+    if: always() && needs.release.result == 'success' && needs.release.outputs.version != ''
+    uses: webgrip/workflows/.github/workflows/docker-build-and-push.yml@main
+    with:
+      docker-context: '.'
+      docker-file: './ops/docker/wordpress/Dockerfile'
+      docker-tags: |
+        webgrip/webgrip-nl-wordpress:latest
+        webgrip/webgrip-nl-wordpress:${{ needs.release.outputs.version }}
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
+#  deploy:
+#    name: 'Deploy'
+#    needs: [ release, build ]
+#    if: always() && needs.build.result == 'success'
+#    uses: webgrip/workflows/.github/workflows/helm-deploy.yml@main
+#    secrets:
+#      DIGITAL_OCEAN_API_KEY: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
+#    with:
+#      environment: 'staging'
+#      path: './ops/helm/webgrip-nl-wordpress'
+#      tag: ${{ needs.release.outputs.version }}

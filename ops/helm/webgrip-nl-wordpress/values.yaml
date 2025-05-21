@@ -1,0 +1,52 @@
+namespace: webgrip-nl
+
+_shared_config:
+  hostname: &hostname webgrip.nl
+  url: &url https://webgrip.nl
+
+wordpress:
+
+  image:
+    registry: ghcr.io
+    repository: webgrip-nl-wordpress
+    tag: latest
+    pullPolicy: Always
+
+  ingress:
+    enabled: true
+    className: ingress-traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-traefik
+    hostname: *hostname
+    tls: true
+    tlsWwwPrefix: true
+    extraTls:
+      - hosts: [ webgrip.nl, www.webgrip.nl ]
+        secretName: letsencrypt-webgrip-nl-wordpress
+
+  persistence:
+    enabled: true
+    storageClass: do-block-storage
+    accessModes: ["ReadWriteOnce"]
+    size: 15Gi
+
+  replicaCount: 1
+
+  mariadb:
+    auth:
+      rootPassword: ${MARIADB_ROOT_PW}
+      database: ${MARIADB_WP_DB}
+      username: ${MARIADB_WP_USER}
+      password: ${MARIADB_WP_PW}
+      existingSecret: wp-db-auth
+    primary:
+      persistence:
+        enabled: true
+        storageClass: do-block-storage
+        accessModes: ["ReadWriteOnce"]
+        size: 15Gi
+
+  allowEmptyPassword: false
+  wordpressScheme: https
+  wordpressUsername: ${WORDPRESS_USERNAME}
+  existingSecret: wp-site-admin

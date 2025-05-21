@@ -1,0 +1,78 @@
+services:
+  mariadb:
+    image: mariadb:10.6
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -u root -p$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      retries: 10
+    environment:
+      MYSQL_DATABASE: ${WORDPRESS_DATABASE_NAME}
+      MYSQL_USER: ${WORDPRESS_DATABASE_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3316:3306"
+
+  wordpress:
+    build:
+      context: .
+      dockerfile: ops/docker/wordpress/Dockerfile
+      # target: production
+    container_name: wordpress
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      WORDPRESS_DB_HOST: mariadb:3306
+      WORDPRESS_DB_NAME: ${WORDPRESS_DATABASE_NAME}
+      WORDPRESS_DB_USER: ${WORDPRESS_DATABASE_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DATABASE_PASSWORD}
+    volumes:
+      - wp_content:/var/www/html/wp-content
+    labels:
+      - "traefik.enable=true"
+
+      # Routers
+      - "traefik.http.routers.wp.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.wp.entrypoints=web"
+      - "traefik.http.routers.wp.middlewares=redirect-to-https"
+
+      - "traefik.http.routers.wp-secure.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.wp-secure.entrypoints=websecure"
+      - "traefik.http.routers.wp-secure.tls=true"
+
+      - "traefik.http.routers.wp-secure.tls.domains[0].main=${DOMAIN_NAME}"
+      - "traefik.http.routers.wp-secure.tls.domains[0].sans=*.${DOMAIN_NAME}"
+
+      # Service (only needed if you keep a non-default port)
+      - "traefik.http.services.wp.loadbalancer.server.port=8080"
+
+      # HTTPS redirect middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  mkcert:
+    image: webgrip/traefik-local-development-mkcert:latest
+    pull_policy: always
+    env_file:
+      - .env
+    volumes:
+      - ~/.config/mkcert:/root/.local/share/mkcert:ro
+      - certificate-data:/certificate-data
+    entrypoint: ["/app/entrypoint.sh", "${DOMAIN_NAME}", "${SUBDOMAIN}.${DOMAIN_NAME}"]
+
+volumes:
+  db_data:
+  wp_content:
+  certificate-data:
+
+networks:
+  default:
+    external: true
+    name: webgrip
