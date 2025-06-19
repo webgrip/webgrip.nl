@@ -2,14 +2,14 @@ services:
   mariadb:
     image: mariadb:10.6
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -u root -p$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -u root -p$MARIADB_ROOT_PASSWORD --silent"]
       interval: 5s
       retries: 10
     environment:
       MYSQL_DATABASE: ${WORDPRESS_DATABASE_NAME}
       MYSQL_USER: ${WORDPRESS_DATABASE_USER}
       MYSQL_PASSWORD: ${WORDPRESS_DATABASE_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     env_file:
       - .env
     volumes:
@@ -29,13 +29,20 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    ports:
+      - "8080:8080"
     environment:
-      WORDPRESS_DB_HOST: mariadb:3306
-      WORDPRESS_DB_NAME: ${WORDPRESS_DATABASE_NAME}
-      WORDPRESS_DB_USER: ${WORDPRESS_DATABASE_USER}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DATABASE_PASSWORD}
+      WORDPRESS_DB_NAME:     ${WORDPRESS_DB_NAME}
+      WORDPRESS_DB_USER:     ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+
+      WP_ENVIRONMENT_TYPE: local
+      WP_DEBUG: "1"
+      WORDPRESS_TABLE_PREFIX: wp_
+
+      ALLOW_EMPTY_PASSWORD: "no"
     volumes:
-      - wp_content:/var/www/html/wp-content
+      - ./wp-content:/var/www/html/wp-content
     labels:
       - "traefik.enable=true"
 
@@ -69,7 +76,7 @@ services:
 
 volumes:
   db_data:
-  wp_content:
+  wp_uploads:
   certificate-data:
 
 networks:

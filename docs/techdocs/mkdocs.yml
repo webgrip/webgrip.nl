@@ -1,5 +1,5 @@
-site_name: 'Telemetry Service TechDocs'
-site_description: 'The Telemetry Service TechDocs site provides documentation for the Telemetry Service.'
+site_name: 'webgrip.nl TechDocs'
+site_description: 'The documentation for webgrip.nl'
 
 theme:
   name: 'material'

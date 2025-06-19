@@ -31,14 +31,14 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
 
-#  deploy:
-#    name: 'Deploy'
-#    needs: [ release, build ]
-#    if: always() && needs.build.result == 'success'
-#    uses: webgrip/workflows/.github/workflows/helm-deploy.yml@main
-#    secrets:
-#      DIGITAL_OCEAN_API_KEY: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
-#    with:
-#      environment: 'staging'
-#      path: './ops/helm/webgrip-nl-wordpress'
-#      tag: ${{ needs.release.outputs.version }}
+  deploy:
+    name: 'Deploy'
+    needs: [ release, build ]
+    if: always() && needs.build.result == 'success'
+    uses: webgrip/workflows/.github/workflows/helm-deploy.yml@main
+    secrets:
+      DIGITAL_OCEAN_API_KEY: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
+    with:
+      environment: 'staging'
+      path: './ops/helm/webgrip-nl-wordpress'
+      tag: ${{ needs.release.outputs.version }}

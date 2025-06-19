@@ -1,0 +1,20 @@
+ARG WP_VERSION=6.8.1
+FROM wordpress:6.8.1-php8.3-fpm-alpine
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y git unzip mariadb-client less \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV WP_CLI_VERSION=2.12.0
+RUN curl -sSL -o /usr/local/bin/wp \
+     https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar \
+ && chmod +x /usr/local/bin/wp
+
+# You may COPY a starter theme/plugin here **or** rely on the bind-mount
+# COPY ./wp-content /var/www/html/wp-content
+
+RUN chown -R www-data:www-data /var/www/html
+
+WORKDIR /var/www/html
+CMD ["apache2-foreground"]
