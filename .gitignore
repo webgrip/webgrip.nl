@@ -8,3 +8,6 @@ age.agekey
 *.dec.yaml
 
 *.zip
+
+vendor/
+node_modules/
